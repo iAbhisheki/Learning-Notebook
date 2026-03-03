@@ -27,6 +27,38 @@ ANTHROPIC_API_KEY=sk-ant-...
 DEFAULT_MODEL=gpt-4o-mini       # or gemini/gemini-2.0-flash or anthropic/claude-3-5-sonnet-20241022
 ```
 
+### 🔗 LiteLLM Proxy Mode (Optional)
+
+If your org provides a **LiteLLM proxy** secured behind Azure AD, all notebooks can route through it automatically. Add these to `.env`:
+
+```bash
+AZURE_TENANT_ID=your-azure-tenant-id
+AZURE_CLIENT_ID=your-azure-client-id
+AZURE_CLIENT_SECRET=your-azure-client-secret
+AZURE_SCOPE=api://your-litellm-app-id/.default
+LITELLM_PROXY_URL=https://your-litellm-proxy.example.com
+```
+
+When these are set, the shared [`setup_llm.py`](./setup_llm.py) module:
+1. Fetches an Azure AD token using the client credentials flow
+2. Configures `litellm` globally to route through your proxy
+3. All notebooks automatically use the proxy — no per-notebook changes needed
+
+When they are **not** set, everything falls back to direct API keys (no behavior change).
+
+| Mode | When Active | How It Works |
+|------|-------------|-------------|
+| 🔑 **Direct** | `LITELLM_PROXY_URL` not set | Calls OpenAI/Gemini/Claude directly using API keys |
+| 🔗 **Proxy** | `LITELLM_PROXY_URL` + Azure creds set | Routes all calls through LiteLLM proxy |
+
+### Proxy Setup Reference
+
+| File | Purpose |
+|------|---------|
+| [`setup_llm.py`](./setup_llm.py) | Shared config module — imported by all notebooks |
+| [`azure_litellm_auth.py`](./azure_litellm_auth.py) | Standalone helper to test Azure AD → LiteLLM auth |
+| [`.env.example`](./.env.example) | Template with all supported environment variables |
+
 ## 📚 Course Structure
 
 ### Phase 1 — LLM Fundamentals
@@ -77,7 +109,7 @@ DEFAULT_MODEL=gpt-4o-mini       # or gemini/gemini-2.0-flash or anthropic/claude
 | 19 | `19_langchain_rag.ipynb` | Loaders, splitters, retrieval chains |
 | 20 | `20_langgraph.ipynb` | State graphs, checkpointing, human-in-the-loop |
 | 21 | `21_langsmith.ipynb` | Tracing, evaluation, monitoring |
-| 22 | `22_industry_frameworks.ipynb` | LlamaIndex, CrewAI, AutoGen, DSPy |
+| 22 | `22_industry_frameworks.ipynb` | LlamaIndex, CrewAI, AutoGen, DSPy *(informational — no LLM calls)* |
 
 ### Phase 8 — Deep Agent Patterns
 | # | Notebook | Topics |
@@ -87,11 +119,19 @@ DEFAULT_MODEL=gpt-4o-mini       # or gemini/gemini-2.0-flash or anthropic/claude
 
 ### 🏆 Capstone Projects
 | # | Project | Applies |
-|---|---------|---------|
+|---|---------|---------| 
 | C1 | Document Q&A System | NB 01-06 |
 | C2 | Multi-Agent Research System | NB 07-14 |
 | C3 | Production RAG Agent | All fundamentals |
 | C4 | LangGraph Production Agent | NB 18-23 |
+
+### ⏭️ Notebooks Without Proxy Integration
+
+| Notebook | Reason |
+|----------|--------|
+| `22_industry_frameworks.ipynb` | Purely informational — no LLM API calls, just static framework comparisons |
+
+All other 27 notebooks (01-21, 23-24, Capstone 1-4) use `setup_llm.py` and fully support proxy mode.
 
 ## 📋 Reference
 - **[TOPICS_GUIDE.md](./TOPICS_GUIDE.md)** — Complete list of every concept covered
